@@ -2,7 +2,7 @@
   "name": "phone-number-formatter",
   "displayName": "Phone Number Formatter",
   "description": "Format phone numbers in a consistent way",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "engines": {
     "vscode": "^1.96.0"
   },
@@ -16,6 +16,14 @@
       {
         "command": "phone-number-formatter.format",
         "title": "Format Phone Number"
+      },
+      {
+        "command": "phone-number-formatter.clean",
+        "title": "Clean Phone Numbers"
+      },
+      {
+        "command": "phone-number-formatter.generateNames",
+        "title": "Generate List of Names"
       }
     ]
   },

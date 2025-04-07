@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 
 export function activate(context: vscode.ExtensionContext) {
-    let disposable = vscode.commands.registerCommand('phone-number-formatter.format', () => {
+    let formatDisposable = vscode.commands.registerCommand('phone-number-formatter.format', () => {
 
         const editor = vscode.window.activeTextEditor;
         if (!editor) return;
@@ -20,8 +20,71 @@ export function activate(context: vscode.ExtensionContext) {
             }
         });
     });
+    context.subscriptions.push(formatDisposable);
 
-    context.subscriptions.push(disposable);
+    let cleanDisposable = vscode.commands.registerCommand('phone-number-formatter.clean', () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) return;
+
+        const document = editor.document;
+        const totalLines = document.lineCount;
+
+        editor.edit(editBuilder => {
+            for (let i = 0; i < totalLines; i++) {
+                const line = document.lineAt(i);
+                const text = line.text;
+                const cleanedText = cleanPhoneNumber(text);
+                editBuilder.replace(line.range, cleanedText);
+            }
+        });
+    });
+
+    context.subscriptions.push(cleanDisposable);
+
+    let generateNamesDisposable = vscode.commands.registerCommand('phone-number-formatter.generateNames', async () => {
+        const prefix = await vscode.window.showInputBox({
+            prompt: 'Enter the prefix for the names',
+            placeHolder: 'e.g., 2025 PI RS'
+        });
+
+        if (!prefix) {
+            vscode.window.showErrorMessage('Prefix is required!');
+            return;
+        }
+
+        const countInput = await vscode.window.showInputBox({
+            prompt: 'Enter the number of names to generate',
+            placeHolder: 'e.g., 100'
+        });
+
+        if (!countInput || isNaN(Number(countInput))) {
+            vscode.window.showErrorMessage('A valid number is required!');
+            return;
+        }
+
+        const count = parseInt(countInput, 10);
+        if (count <= 0) {
+            vscode.window.showErrorMessage('Number of names must be greater than 0!');
+            return;
+        }
+
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active editor found!');
+            return;
+        }
+
+        const names = generateNames(prefix, count);
+
+        editor.edit(editBuilder => {
+            const position = editor.selection.active;
+            editBuilder.insert(position, names.join('\n'));
+        });
+
+        vscode.window.showInformationMessage(`Generated ${count} names with prefix "${prefix}".`);
+    });
+
+    context.subscriptions.push(generateNamesDisposable);
 }
 
 function formatPhoneNumber(input: string): string {
@@ -38,6 +101,8 @@ function formatPhoneNumber(input: string): string {
             num = num.slice(2);
         } else if (num.startsWith('+62 8')) {
             num = num.slice(4);
+        } else if (num.startsWith('+628')) {
+            num = num.slice(3);
         } else {
             return num; // Return original if it doesn't match any rule
         }
@@ -61,6 +126,22 @@ function formatPhoneNumber(input: string): string {
     });
 
     return formattedNumbers.join(' ::: ');
+}
+
+// Function to clean phone numbers by removing all non-numeric characters
+function cleanPhoneNumber(input: string): string {
+    const phoneNumbers = input.split(':::').map(num => num.trim());
+    const cleanedNumbers = phoneNumbers.map(num => num.replace(/[^\d]/g, ''));
+    return cleanedNumbers.join(' ::: ');
+}
+
+function generateNames(prefix: string, count: number): string[] {
+    const names: string[] = [];
+    for (let i = 1; i <= count; i++) {
+        const paddedNumber = i.toString().padStart(3, '0');
+        names.push(`${prefix} ${paddedNumber}`);
+    }
+    return names;
 }
 
 // This method is called when your extension is deactivated

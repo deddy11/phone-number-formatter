@@ -34,11 +34,17 @@ No known issues at this time.
 - add country option to change country code
 
 ## Release Notes
+### 0.0.5
+- add Generate Name List command
+
+### 0.0.4
+- add Clean Phone Number command
+
+### 0.0.3
+- add +628 starting number
 
 ### 0.0.2
-
 - check phone number before remove non-numeric characters
 
 ### 0.0.1
-
-Initial release of phone-number-formatter.
+- Initial release of phone-number-formatter.
