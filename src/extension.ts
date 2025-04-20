@@ -68,20 +68,36 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
+        const startNumberInput = await vscode.window.showInputBox({
+            prompt: 'Enter the starting number',
+            placeHolder: 'e.g., 1'
+        });
+
+        if (!startNumberInput || isNaN(Number(startNumberInput))) {
+            vscode.window.showErrorMessage('A valid starting number is required!');
+            return;
+        }
+
+        const startNumber = parseInt(startNumberInput, 10);
+        if (startNumber < 0) {
+            vscode.window.showErrorMessage('Starting number must be non-negative!');
+            return;
+        }
+
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found!');
             return;
         }
 
-        const names = generateNames(prefix, count);
+        const names = generateNamesWithStart(prefix, count, startNumber);
 
         editor.edit(editBuilder => {
             const position = editor.selection.active;
             editBuilder.insert(position, names.join('\n'));
         });
 
-        vscode.window.showInformationMessage(`Generated ${count} names with prefix "${prefix}".`);
+        vscode.window.showInformationMessage(`Generated ${count} names with prefix "${prefix}" starting from ${startNumber}.`);
     });
 
     context.subscriptions.push(generateNamesDisposable);
@@ -135,10 +151,10 @@ function cleanPhoneNumber(input: string): string {
     return cleanedNumbers.join(' ::: ');
 }
 
-function generateNames(prefix: string, count: number): string[] {
+function generateNamesWithStart(prefix: string, count: number, start: number): string[] {
     const names: string[] = [];
-    for (let i = 1; i <= count; i++) {
-        const paddedNumber = i.toString().padStart(3, '0');
+    for (let i = 0; i < count; i++) {
+        const paddedNumber = (start + i).toString().padStart(3, '0');
         names.push(`${prefix} ${paddedNumber}`);
     }
     return names;

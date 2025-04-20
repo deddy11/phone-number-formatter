@@ -34,6 +34,9 @@ No known issues at this time.
 - add country option to change country code
 
 ## Release Notes
+### 0.0.6
+- add start number for Generate Name List command
+
 ### 0.0.5
 - add Generate Name List command
 
