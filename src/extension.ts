@@ -3,10 +3,12 @@
 import * as vscode from 'vscode';
 
 export function activate(context: vscode.ExtensionContext) {
-    let formatDisposable = vscode.commands.registerCommand('phone-number-formatter.format', () => {
+    let formatDisposable = vscode.commands.registerCommand('contacts-formatter.format', () => {
 
         const editor = vscode.window.activeTextEditor;
-        if (!editor) return;
+        if (!editor) {
+            return;
+        }
 
         const document = editor.document;
         const totalLines = document.lineCount;
@@ -22,9 +24,11 @@ export function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(formatDisposable);
 
-    let cleanDisposable = vscode.commands.registerCommand('phone-number-formatter.clean', () => {
+    let cleanDisposable = vscode.commands.registerCommand('contacts-formatter.clean', () => {
         const editor = vscode.window.activeTextEditor;
-        if (!editor) return;
+        if (!editor) {
+            return;
+        }
 
         const document = editor.document;
         const totalLines = document.lineCount;
@@ -38,10 +42,9 @@ export function activate(context: vscode.ExtensionContext) {
             }
         });
     });
-
     context.subscriptions.push(cleanDisposable);
 
-    let generateNamesDisposable = vscode.commands.registerCommand('phone-number-formatter.generateNames', async () => {
+    let generateNamesDisposable = vscode.commands.registerCommand('contacts-formatter.generateNames', async () => {
         const prefix = await vscode.window.showInputBox({
             prompt: 'Enter the prefix for the names',
             placeHolder: 'e.g., 2025 PI RS'
@@ -99,8 +102,27 @@ export function activate(context: vscode.ExtensionContext) {
 
         vscode.window.showInformationMessage(`Generated ${count} names with prefix "${prefix}" starting from ${startNumber}.`);
     });
-
     context.subscriptions.push(generateNamesDisposable);
+
+    let cleanNamesDisposable = vscode.commands.registerCommand('contacts-formatter.cleanNames', () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            return;
+        }
+
+        const document = editor.document;
+        const totalLines = document.lineCount;
+
+        editor.edit(editBuilder => {
+            for (let i = 0; i < totalLines; i++) {
+                const line = document.lineAt(i);
+                const text = line.text;
+                const cleanedText = cleanNameSpacing(text);
+                editBuilder.replace(line.range, cleanedText);
+            }
+        });
+    });
+    context.subscriptions.push(cleanNamesDisposable);
 }
 
 function formatPhoneNumber(input: string): string {
@@ -158,6 +180,17 @@ function generateNamesWithStart(prefix: string, count: number, start: number): s
         names.push(`${prefix} ${paddedNumber}`);
     }
     return names;
+}
+
+function cleanNameSpacing(input: string): string {
+    return input
+        .split('\n')
+        .map(line =>
+            line
+                .replace(/\s+/g, ' ')
+                .trim()
+        )
+        .join('\n');
 }
 
 // This method is called when your extension is deactivated
