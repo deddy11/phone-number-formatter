@@ -34,11 +34,22 @@ export function activate(context: vscode.ExtensionContext) {
         const totalLines = document.lineCount;
 
         editor.edit(editBuilder => {
-            for (let i = 0; i < totalLines; i++) {
+            // Iterate backwards to avoid index issues when deleting empty lines
+            for (let i = totalLines - 1; i >= 0; i--) {
                 const line = document.lineAt(i);
                 const text = line.text;
-                const cleanedText = cleanPhoneNumber(text);
-                editBuilder.replace(line.range, cleanedText);
+                
+                // Remove empty lines
+                if (text.trim() === '') {
+                    const lineStart = new vscode.Position(i, 0);
+                    const lineEnd = i < totalLines - 1 
+                        ? new vscode.Position(i + 1, 0) 
+                        : new vscode.Position(i, line.range.end.character);
+                    editBuilder.delete(new vscode.Range(lineStart, lineEnd));
+                } else {
+                    const cleanedText = cleanPhoneNumber(text);
+                    editBuilder.replace(line.range, cleanedText);
+                }
             }
         });
     });
