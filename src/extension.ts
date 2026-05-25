@@ -32,26 +32,34 @@ export function activate(context: vscode.ExtensionContext) {
 
         const document = editor.document;
         const totalLines = document.lineCount;
+        const cleanedLines: string[] = [];
 
-        editor.edit(editBuilder => {
-            // Iterate backwards to avoid index issues when deleting empty lines
-            for (let i = totalLines - 1; i >= 0; i--) {
-                const line = document.lineAt(i);
-                const text = line.text;
-                
-                // Remove empty lines
-                if (text.trim() === '') {
-                    const lineStart = new vscode.Position(i, 0);
-                    const lineEnd = i < totalLines - 1 
-                        ? new vscode.Position(i + 1, 0) 
-                        : new vscode.Position(i, line.range.end.character);
-                    editBuilder.delete(new vscode.Range(lineStart, lineEnd));
-                } else {
-                    const cleanedText = cleanPhoneNumber(text);
-                    editBuilder.replace(line.range, cleanedText);
-                }
+        // First pass: collect and clean non-empty lines
+        for (let i = 0; i < totalLines; i++) {
+            const line = document.lineAt(i);
+            const text = line.text;
+            
+            // Skip empty lines
+            if (text.trim() === '') {
+                continue;
             }
-        });
+            
+            const cleanedText = cleanPhoneNumber(text);
+            cleanedLines.push(cleanedText);
+        }
+
+        // Replace entire document with cleaned content
+        if (cleanedLines.length > 0) {
+            editor.edit(editBuilder => {
+                const firstLine = document.lineAt(0);
+                const lastLine = document.lineAt(totalLines - 1);
+                const fullRange = new vscode.Range(
+                    firstLine.range.start,
+                    lastLine.range.end
+                );
+                editBuilder.replace(fullRange, cleanedLines.join('\n'));
+            });
+        }
     });
     context.subscriptions.push(cleanDisposable);
 
